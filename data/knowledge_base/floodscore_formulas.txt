@@ -1,0 +1,20 @@
+FLOODSCORE AND TTL FORMULA REFERENCE
+
+FloodScore = w1*F_broadcast + w2*F_newmac + w3*F_pps
+  w1=0.5, w2=0.3, w3=0.2  (weights sum to 1.0)
+  Score range: 0.0 (no risk) to 1.0 (flood in progress)
+ 
+Thresholds:
+  < 0.3  = NORMAL
+  0.3-0.6 = WARNING - increase monitoring
+  0.6-0.8 = HIGH - apply flood suppression rule
+  > 0.8  = CRITICAL - block MAC via Redis TTL
+ 
+TTL = base_ttl * F_activity * F_stability * F_pressure * alpha
+  F_activity  = log(1 + pps) / log(1 + max_pps)
+  F_stability = 1 / (1 + age_variance)
+  F_pressure  = 1 - (mac_fill / max_mac_fill)
+  alpha = 0.5
+
+ 
+MAC states: UNKNOWN (TTL=30s) -> LEARNING (dynamic) -> STABLE (TTL=300s)

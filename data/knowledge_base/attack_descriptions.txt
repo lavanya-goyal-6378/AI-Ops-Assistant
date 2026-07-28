@@ -1,0 +1,18 @@
+NETWORK ATTACK DESCRIPTIONS
+
+DDoS: Very high PPS from many source MACs to one destination.
+  Features: high fwd_pkt_count, low IAT, max FloodScore
+  Response: Block source MACs via Redis TTL. Alert NOC.
+ 
+DoS: High PPS from single source, high SYN count.
+  Features: high SYN count, low flow duration, high byte rate
+  Response: Block source IP. Apply rate limit.
+ 
+PortScan: Many short flows from one source to many destination ports.
+  Features: very short duration, low byte count, high flow count
+  Response: Flag source MAC. Apply stricter TTL.
+ 
+CAM Table Overflow: Attacker sends packets from thousands of spoofed
+MACs to fill the switch table, forcing it to flood all traffic.
+  Features: very high new_mac_rate, mac_fill near 1.0
+  Response: Lower new_mac_rate threshold. Apply strict eviction.

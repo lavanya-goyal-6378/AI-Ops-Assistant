@@ -1,0 +1,20 @@
+DRAGONFLY TOPOLOGY RUNBOOK
+
+Topology: 3 groups, 2 switches per group, 1 global link per switch.
+Global links: G0_S0 <-> G1_S0, G0_S1 <-> G2_S0, G1_S1 <-> G2_S1
+MAC convention: AA:00:00:00:GG:SS
+ 
+COMMON ISSUES AND FIXES:
+ 
+Issue: High FloodScore on a switch (> 0.7)
+Cause: CAM table overflow, broadcast storm, or new MAC learning spike
+Fix: Check mac_fill. If > 0.8, trigger FIFO eviction.
+     Increase flood suppression threshold in engine.py.
+ 
+Issue: MAC table full (fill ratio = 1.0)
+Cause: Too many MACs learned, aging timer too high
+Fix: Lower TTL for LEARNING-state MACs. Apply LRU eviction.
+     Check for MAC spoofing (rapid new-MAC events).
+ 
+Issue: Packet loss on inter-group links
+Fix: Check OVS flow table: ovs-ofctl dump-flows <switch>
