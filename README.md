@@ -3,31 +3,43 @@ Intelligent system that monitors the Dragonfly SDN network in real time,
 detects anomalies using Random Forest model, retrieves relevant
 context via RAG, and generates human-readable incident reports.
 
-Project Architecture:
-+-----------------------------------------------------------------+
-|                    STREAMLIT DASHBOARD                          |
-|         Live telemetry  |  Active alerts  |  AI explanation     |
-+------------------+----------------------------------------------+
-                    |
-+------------------v----------------------------------------------+
-|              INCIDENT EXPLAINER  (RAG + LLM)                    |
-|   ChromaDB retrieval  ->  LLaMA 3 prompt  ->  incident report   |
-+------------------+----------------------------------------------+
-                   |
-+------------------v----------------------------------------------+
-|              ANOMALY DETECTOR  (RF model)                       |
-|   Flow features  ->  predict label + confidence score           |
-+------------------+----------------------------------------------+
-                   |
-+------------------v----------------------------------------------+
-|              TELEMETRY COLLECTOR                                 |
-|   Polls Dragonfly simulation  ->  extracts flow features        |
-+------------------+----------------------------------------------+
-                   |
-+------------------v----------------------------------------------+
-|              KNOWLEDGE BASE  (ChromaDB vector store)            |
-|   Dragonfly docs + runbooks + FloodScore formulas + attacks     |
-+-----------------------------------------------------------------+
+## Project Architecture
+
+```text
+                     +-----------------------------+
+                     | STREAMLIT DASHBOARD         |
+                     | Live Telemetry | Alerts     |
+                     | AI Explanation             |
+                     +-------------+---------------+
+                                   |
+                                   v
+                     +-----------------------------+
+                     | INCIDENT EXPLAINER          |
+                     | RAG + Groq LLM              |
+                     | ChromaDB Retrieval          |
+                     +-------------+---------------+
+                                   |
+                                   v
+                     +-----------------------------+
+                     | ANOMALY DETECTOR            |
+                     | Random Forest Model         |
+                     | Predict Label + Confidence  |
+                     +-------------+---------------+
+                                   |
+                                   v
+                     +-----------------------------+
+                     | TELEMETRY COLLECTOR         |
+                     | Dragonfly / Mininet         |
+                     | Extract Flow Features       |
+                     +-------------+---------------+
+                                   |
+                                   v
+                     +-----------------------------+
+                     | KNOWLEDGE BASE              |
+                     | ChromaDB                    |
+                     | Docs + Runbooks + Attacks   |
+                     +-----------------------------+
+```
 
 ## Results
 | Metric                 | Value      |
