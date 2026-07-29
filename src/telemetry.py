@@ -1,9 +1,37 @@
-import time, random
- 
-# When we will  have live Mininet running, we replace the random values
-# below with real values pulled from  engine.py
- 
-def get_live_telemetry():
+# src/telemetry.py
+import time
+import random
+import json
+import numpy as np
+
+try:
+    import redis
+    _r = redis.Redis(host='172.22.159.198', port=6379, decode_responses=True)
+    _r.ping()
+    REDIS_AVAILABLE = True
+    print('[telemetry] Connected to Redis — live engine data available')
+except Exception:
+    REDIS_AVAILABLE = False
+    print('[telemetry] Redis not found — using simulated data')
+
+
+def get_live_telemetry() -> dict:
+    if REDIS_AVAILABLE:
+        # Pick a random switch and read its telemetry from Redis
+        switches = ['g0_s0', 'g0_s1', 'g1_s0', 'g1_s1', 'g2_s0', 'g2_s1']
+        switch   = random.choice(switches)
+        raw      = _r.get(f'telemetry:{switch}')
+
+        if raw:
+            return json.loads(raw)
+        else:
+            print(f'[telemetry] No Redis data for {switch} yet — using simulated')
+            return _simulated()
+    else:
+        return _simulated()
+
+
+def _simulated() -> dict:
     return {
         'flow_duration':  round(random.uniform(0.01, 10.0), 3),
         'fwd_pkt_count':  random.randint(1, 5000),
@@ -20,19 +48,46 @@ def get_live_telemetry():
         'timestamp':      time.time(),
     }
 
-#updating the attack specific features 
-def simulate_attack(attack_type='ddos'):
+
+def simulate_attack(attack_type='ddos') -> dict:
     base = get_live_telemetry()
+
     if attack_type == 'ddos':
-        base.update({'pps':9800,'fwd_pkt_count':4900,
-                     'iat_mean':0.00005,'flood_score':0.92,
-                     'mean_pkt_size':60})
+        base.update({
+            'pps':           float(np.random.uniform(5000, 10000)),
+            'fwd_pkt_count': int(np.random.randint(3000, 6000)),
+            'bwd_pkt_count': int(np.random.randint(0, 100)),
+            'mean_pkt_size': float(np.random.uniform(40, 100)),
+            'iat_mean':      float(np.random.uniform(0.00001, 0.001)),
+            'flood_score':   float(np.random.uniform(0.7, 1.0)),
+            'mac_fill':      float(np.random.uniform(0.3, 0.8)),
+            'new_mac_rate':  float(np.random.uniform(5, 30)),
+            'syn_count':     int(np.random.randint(0, 100)),
+        })
     elif attack_type == 'portscan':
-        base.update({'flow_duration':0.002,'fwd_pkt_count':2,
-                     'mean_pkt_size':44,'syn_count':450})
+        base.update({
+            'flow_duration': float(np.random.uniform(0.001, 0.05)),
+            'fwd_pkt_count': int(np.random.randint(1, 10)),
+            'mean_pkt_size': float(np.random.uniform(40, 80)),
+            'iat_mean':      float(np.random.uniform(0.0001, 0.01)),
+            'pps':           float(np.random.uniform(100, 1000)),
+            'flood_score':   float(np.random.uniform(0.1, 0.4)),
+            'syn_count':     int(np.random.randint(300, 500)),
+        })
     elif attack_type == 'camoverflow':
-        base.update({'mac_fill':0.97,'new_mac_rate':48,
-                     'flood_score':0.85})
+        base.update({
+            'mac_fill':      float(np.random.uniform(0.85, 1.0)),
+            'new_mac_rate':  float(np.random.uniform(30, 50)),
+            'flood_score':   float(np.random.uniform(0.7, 0.95)),
+            'pps':           float(np.random.uniform(2000, 6000)),
+        })
+    elif attack_type == 'dos':
+        base.update({
+            'pps':           float(np.random.uniform(1000, 5000)),
+            'fwd_pkt_count': int(np.random.randint(500, 3000)),
+            'iat_mean':      float(np.random.uniform(0.0001, 0.01)),
+            'flood_score':   float(np.random.uniform(0.4, 0.8)),
+            'syn_count':     int(np.random.randint(100, 500)),
+        })
+
     return base
-
-

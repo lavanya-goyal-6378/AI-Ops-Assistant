@@ -56,6 +56,8 @@ RELEVANT DOCUMENTATION:
  
 Generate an incident report with root cause and fix steps.
         '''
+        import time
+        start = time.time()
  
         response = self.client.chat.completions.create(
             model='llama-3.1-8b-instant',
@@ -66,6 +68,9 @@ Generate an incident report with root cause and fix steps.
             temperature=0.3,
             max_tokens=600
         )
+
+        groq_latency = (time.time() - start) * 1000
+        print(f'Groq API latency: {groq_latency:.2f} ms')
         return response.choices[0].message.content
  
 if __name__ == '__main__':
