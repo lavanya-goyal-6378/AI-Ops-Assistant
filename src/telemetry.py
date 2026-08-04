@@ -16,19 +16,26 @@ except Exception:
 
 
 def get_live_telemetry() -> dict:
-    if REDIS_AVAILABLE:
-        # Pick a random switch and read its telemetry from Redis
-        switches = ['g0_s0', 'g0_s1', 'g1_s0', 'g1_s1', 'g2_s0', 'g2_s1']
-        switch   = random.choice(switches)
-        raw      = _r.get(f'telemetry:{switch}')
+    if not REDIS_AVAILABLE:
+        raise RuntimeError("Redis is not available")
 
-        if raw:
-            return json.loads(raw)
-        else:
-            print(f'[telemetry] No Redis data for {switch} yet — using simulated')
-            return _simulated()
-    else:
-        return _simulated()
+    switch = 'g0_s0'
+    raw = _r.get(f'telemetry:{switch}')
+
+    if raw:
+        data = json.loads(raw)
+
+        print(
+            f"[REDIS READ] switch={switch} "
+            f"pps={data.get('pps')} "
+            f"timestamp={data.get('timestamp')}"
+        )
+
+        return data
+
+    raise RuntimeError(
+        f"No live Redis telemetry for {switch}"
+    )
 
 
 def _simulated() -> dict:
